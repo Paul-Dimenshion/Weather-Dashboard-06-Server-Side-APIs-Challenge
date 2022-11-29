@@ -15,3 +15,10 @@ function getFiveDay (fiveDayArray, temp, wind, humidity) {
     let iconArray = [];
 }
 
+  // dynamically created elements 
+  let container = document.createElement("div");
+  let header = document.createElement("h1");
+  let tempEl = document.createElement("p");
+  let windEl = document.createElement("p");
+  let humidityEl = document.createElement("p");
+  let iconEl = document.createElement("img");
