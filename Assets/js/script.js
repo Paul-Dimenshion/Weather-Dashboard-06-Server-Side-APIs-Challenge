@@ -143,3 +143,86 @@ function getCurrentDay (location, temp, wind, humidity, uvIndex, icon) {
         getCurrentDay(location, temp, wind, humidity, uvIndex, icon);
     }
 }
+
+// takes the location, latitude, and longitude to search the API for the weather data
+function getWeather (location, lat, lon) {
+    fetch(`https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&units=imperial&exclude=minutely,hourly&appid=${apiKey}`)
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (data) {
+        // finding the weather attributes to display 
+        let temp = data.current.temp;
+        let wind = data.current.wind_speed;
+        let humidity = data.current.humidity;
+        let uvIndex = data.current.uvi;
+        let icon = data.current.weather[0].icon;
+        // creates an array to store the five day forecast to be used in the five day forecast function
+        let fiveDayArray = data.daily;
+
+        // passes that info into functions that further specify which data to display - weather for the current day and the five day forecast
+        getCurrentDay(location, temp, wind, humidity, uvIndex, icon);
+        getFiveDay(fiveDayArray, temp, wind, humidity);
+
+    })
+    .catch(function (err) {
+      console.error(err);
+    });
+}
+
+// finds latitude and longitude of city input
+function getLatLon (city) {
+    if (city !== '') {
+        // calls the open weather API using the city as a query
+        fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=5&appid=${apiKey}`)
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (data) {
+            // if data exists, sets the latitude and longitude of the location to variables that are passed in to the getWeather function, otherwise gives user an alert saying that the location is invalid. 
+            if (data[0] !== undefined) {
+                let location = data[0].name;
+                let lat = data[0].lat;
+                let lon = data[0].lon;
+
+                getWeather(location, lat, lon);
+            } else {
+                alert("Invalid location, please check spelling and try again.");
+                location.reload();
+            }
+        })
+        .catch(function (err) {
+          console.error(err);
+        });
+    } else {
+        alert("Please enter a city into the search bar.")
+        location.reload();
+    }
+
+}
+
+// parses the local storage
+function displaySearchHistory () {
+    let searchHistory = JSON.parse(localStorage.getItem("history"));
+
+    // if local storage is not empty, dynamically creates a button for each local storage item
+    if (searchHistory !== null) {
+        for (i = 0; i < searchHistory.length; i++) {
+            let newButton = document.createElement("button");
+            newButton.setAttribute("class", "button is-light");
+            newButton.setAttribute("id", "history-button");
+            newButton.textContent = searchHistory[i];
+            historyContainer.appendChild(newButton.cloneNode(true));
+        }
+
+        // finds all dynamically created buttons, loops through them and adds event listeners for each, which will call the search process using the text associated with the button as the search term
+        let historyButtons = document.querySelectorAll("#history-button");
+        for (i = 0 ; i < historyButtons.length; i++) {
+            historyButtons[i].addEventListener('click', function (event){
+                let searchTerm = event.target.textContent;
+                getLatLon(searchTerm);
+            }) ; 
+         }
+    }
+}
+
